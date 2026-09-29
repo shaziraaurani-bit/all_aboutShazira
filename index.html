@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personal Desktop OS — Portfolio</title>
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================================================
+       1. VARIABLES & RESET
+       ========================================================================== */
+    :root {
+      --bg-cream: #fff0f3;
+      --bg-desktop: #ffe6ea;
+      --pink-soft: #ffccd5;
+      --pink-medium: #ffb3c1;
+      --pink-accent: #ff758f;
+      --pink-deep: #c9184a;
+      --pink-dark: #800f2f;
+      
+      --window-bg: rgba(255, 255, 255, 0.85);
+      --window-border: #ffccd5;
+      --text-main: #590d22;
+      --text-muted: #a4133c;
+      
+      --shadow-soft: 0 10px 30px rgba(201, 24, 74, 0.08);
+      --shadow-window: 0 15px 35px rgba(201, 24, 74, 0.12);
+      
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+      --font-heading: 'Playfair Display', serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: linear-gradient(135deg, #fff0f3 0%, #ffe6ea 50%, #ffccd5 100%);
+      color: var(--text-main);
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Pattern Overlay Retro-Modern */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: radial-gradient(var(--pink-medium) 0.8px, transparent 0.8px);
+      background-size: 24px 24px;
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    /* ==========================================================================
+       2. DESKTOP AREA & ICONS
+       ========================================================================== */
+    .desktop {
+      height: calc(100vh - 55px);
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 25px;
+      position: relative;
+    }
+
+    .desktop-icon {
+      width: 95px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 10px;
+      border-radius: 16px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .desktop-icon:hover {
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(8px);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .icon-box {
+      width: 58px;
+      height: 58px;
+      background: linear-gradient(135deg, #ffffff, var(--pink-soft));
+      border: 1.5px solid var(--pink-medium);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: var(--pink-deep);
+      box-shadow: 0 6px 15px rgba(255, 117, 143, 0.15);
+    }
+
+    .icon-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+      text-align: center;
+      letter-spacing: 0.2px;
+    }
+
+    /* ==========================================================================
+       3. WINDOW COMPONENT (DRAGGABLE & GLASSMORPHISM)
+       ========================================================================== */
+    .window {
+      position: absolute;
+      background: var(--window-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1.5px solid rgba(255, 204, 213, 0.8);
+      border-radius: 20px;
+      box-shadow: var(--shadow-window);
+      min-width: 320px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      opacity: 0;
+      transform: scale(0.92) translateY(15px);
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease, width 0.3s ease, height 0.3s ease;
+    }
+
+    .window.active {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: auto;
+    }
+
+    /* Header / Titlebar Window */
+    .window-header {
+      background: rgba(255, 255, 255, 0.7);
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--pink-soft);
+      cursor: move;
+    }
+
+    .window-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--pink-deep);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.3px;
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .control-btn {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .control-btn:hover { opacity: 0.8; }
+    .btn-close { background: #ff5f56; }
+    .btn-minimize { background: #ffbd2e; }
+    .btn-maximize { background: #27c93f; }
+
+    /* Window Body */
+    .window-body {
+      padding: 24px;
+      overflow-y: auto;
+      max-height: 70vh;
+      color: var(--text-main);
+      user-select: text;
+    }
+
+    .window-body::-webkit-scrollbar {
+      width: 6px;
+    }
+    .window-body::-webkit-scrollbar-thumb {
+      background: var(--pink-medium);
+      border-radius: 10px;
+    }
+
+    /* ==========================================================================
+       4. SPECIFIC WINDOW CONTENT
+       ========================================================================== */
+    /* Profile Frame Section (About Window) */
+    .profile-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 16px;
+    }
+
+    .profile-frame-wrapper {
+      position: relative;
+      padding: 10px;
+      background: linear-gradient(145deg, #ffffff, var(--pink-soft));
+      border-radius: 50%;
+      box-shadow: 0 10px 25px rgba(201, 24, 74, 0.15);
+      border: 2px dashed var(--pink-accent);
+      transition: transform 0.3s ease;
+    }
+
+    .profile-frame-wrapper:hover {
+      transform: rotate(3deg) scale(1.02);
+    }
+
+    .profile-img {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #ffffff;
+      display: block;
+    }
+
+    .profile-name {
+      font-family: var(--font-heading);
+      font-size: 22px;
+      color: var(--pink-dark);
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .profile-tag {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--pink-deep);
+      background: var(--pink-soft);
+      padding: 4px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .profile-bio {
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: var(--text-main);
+      margin-top: 8px;
+    }
+
+    /* Skills Window */
+    .skill-item {
+      margin-bottom: 14px;
+    }
+
+    .skill-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .skill-bar {
+      height: 8px;
+      background: var(--pink-soft);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .skill-progress {
+      height: 100%;
+      background: linear-gradient(90deg, var(--pink-accent), var(--pink-deep));
+      border-radius: 10px;
+      width: 0;
+      transition: width 1s ease-in-out;
+    }
+
+    /* Projects Window */
+    .project-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+    }
+
+    .project-card {
+      background: #ffffff;
+      border: 1px solid var(--pink-soft);
+      border-radius: 14px;
+      padding: 14px;
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+
+    .project-card:hover {
+      border-color: var(--pink-accent);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .project-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--pink-dark);
+      margin-bottom: 6px;
+    }
+
+    .project-desc {
+      font-size: 12px;
+      color: #666;
+      line-height: 1.4;
+    }
+
+    /* Contact Window Form */
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: var(--pink-dark);
+    }
+
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--pink-soft);
+      border-radius: 10px;
+      font-family: var(--font-body);
+      font-size: 12px;
+      background: rgba(255, 255, 255, 0.9);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus, .form-group textarea:focus {
+      border-color: var(--pink-accent);
+    }
+
+    .btn-send {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, var(--pink-accent), var(--pink-deep));
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(201, 24, 74, 0.2);
+      transition: opacity 0.2s;
+    }
+
+    .btn-send:hover { opacity: 0.9; }
+
+    /* ==========================================================================
+       5. TASKBAR (BOTTOM NAVBAR)
+       ========================================================================== */
+    .taskbar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 55px;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--pink-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 9999;
+    }
+
+    .start-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--pink-soft), #ffffff);
+      border: 1px solid var(--pink-medium);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--pink-dark);
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(201, 24, 74, 0.08);
+      transition: transform 0.2s;
+    }
+
+    .start-btn:hover {
+      transform: scale(1.03);
+    }
+
+    .taskbar-apps {
+      display: flex;
+      gap: 8px;
+    }
+
+    .app-tab {
+      padding: 6px 14px;
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid var(--pink-soft);
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .app-tab.active-tab {
+      background: var(--pink-soft);
+      border-color: var(--pink-accent);
+      color: var(--pink-dark);
+    }
+
+    .taskbar-time {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--pink-dark);
+      background: rgba(255, 255, 255, 0.5);
+      padding: 6px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--pink-soft);
+    }
+
+    /* ==========================================================================
+       6. RESPONSIVE DESIGN (MOBILE ADAPTATION)
+       ========================================================================== */
+    @media (max-width: 600px) {
+      .desktop {
+        padding: 15px;
+        gap: 15px;
+      }
+
+      .window {
+        width: 90% !important;
+        left: 5% !important;
+        top: 10% !important;
+      }
+
+      .taskbar-apps {
+        display: none; /* Sembunyikan tab app di layar kecil agar rapi */
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- DESKTOP CONTAINER -->
+  <main class="desktop">
+    <!-- Desktop Icons -->
+    <div class="desktop-icon" onclick="openWindow('win-about')">
+      <div class="icon-box"><i class="fa-regular fa-user"></i></div>
+      <span class="icon-label">About_Me.txt</span>
+    </div>
+
+    <div class="desktop-icon" onclick="openWindow('win-skills')">
+      <div class="icon-box"><i class="fa-solid fa-sparkles"></i></div>
+      <span class="icon-label">Skills.exe</span>
+    </div>
+
+    <div class="desktop-icon" onclick="openWindow('win-projects')">
+      <div class="icon-box"><i class="fa-regular fa-folder-open"></i></div>
+      <span class="icon-label">Projects/</span>
+    </div>
+
+    <div class="desktop-icon" onclick="openWindow('win-contact')">
+      <div class="icon-box"><i class="fa-regular fa-paper-plane"></i></div>
+      <span class="icon-label">Contact.app</span>
+    </div>
+  </main>
+
+  <!-- WINDOW 1: ABOUT ME -->
+  <div id="win-about" class="window" style="width: 380px; top: 80px; left: 120px;">
+    <div class="window-header">
+      <div class="window-title"><i class="fa-regular fa-file-lines"></i> About_Me.txt</div>
+      <div class="window-controls">
+        <button class="control-btn btn-close" onclick="closeWindow('win-about')"></button>
+      </div>
+    </div>
+    <div class="window-body">
+      <div class="profile-container">
+        <!-- Profile Picture Frame -->
+        <div class="profile-frame-wrapper">
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400" alt="Foto Profil" class="profile-img">
+        </div>
+        <div>
+          <h2 class="profile-name">Gita Gutawa</h2>
+          <span class="profile-tag">UI/UX & Frontend Dev</span>
+        </div>
+        <p class="profile-bio">
+          Halo! Saya seorang pengembang web yang menyukai estetik minimalis, desain antarmuka yang ramah pengguna, dan kode yang bersih. Berfokus membuat pengalaman digital yang indah dan fungsional.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- WINDOW 2: SKILLS -->
+  <div id="win-skills" class="window" style="width: 360px; top: 120px; left: 520px;">
+    <div class="window-header">
+      <div class="window-title"><i class="fa-solid fa-sparkles"></i> Skills.exe</div>
+      <div class="window-controls">
+        <button class="control-btn btn-close" onclick="closeWindow('win-skills')"></button>
+      </div>
+    </div>
+    <div class="window-body">
+      <div class="skill-item">
+        <div class="skill-info"><span>HTML & CSS3</span><span>92%</span></div>
+        <div class="skill-bar"><div class="skill-progress" data-width="92%"></div></div>
+      </div>
+      <div class="skill-item">
+        <div class="skill-info"><span>JavaScript (Vanilla)</span><span>85%</span></div>
+        <div class="skill-bar"><div class="skill-progress" data-width="85%"></div></div>
+      </div>
+      <div class="skill-item">
+        <div class="skill-info"><span>UI/UX Design (Figma)</span><span>88%</span></div>
+        <div class="skill-bar"><div class="skill-progress" data-width="88%"></div></div>
+      </div>
+      <div class="skill-item">
+        <div class="skill-info"><span>Responsive Web</span><span>95%</span></div>
+        <div class="skill-bar"><div class="skill-progress" data-width="95%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WINDOW 3: PROJECTS -->
+  <div id="win-projects" class="window" style="width: 440px; top: 180px; left: 220px;">
+    <div class="window-header">
+      <div class="window-title"><i class="fa-regular fa-folder-open"></i> Projects/</div>
+      <div class="window-controls">
+        <button class="control-btn btn-close" onclick="closeWindow('win-projects')"></button>
+      </div>
+    </div>
+    <div class="window-body">
+      <div class="project-grid">
+        <div class="project-card">
+          <div class="project-title">Bloom E-Commerce</div>
+          <div class="project-desc">Website toko online produk kecantikan organik dengan tema pastel modern.</div>
+        </div>
+        <div class="project-card">
+          <div class="project-title">Aura Journal</div>
+          <div class="project-desc">Aplikasi catatan harian interaktif berbasis web dengan fitur mood tracker.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WINDOW 4: CONTACT -->
+  <div id="win-contact" class="window" style="width: 350px; top: 150px; left: 680px;">
+    <div class="window-header">
+      <div class="window-title"><i class="fa-regular fa-paper-plane"></i> Contact.app</div>
+      <div class="window-controls">
+        <button class="control-btn btn-close" onclick="closeWindow('win-contact')"></button>
+      </div>
+    </div>
+    <div class="window-body">
+      <form onsubmit="event.preventDefault(); alert('Pesan berhasil dikirim!');">
+        <div class="form-group">
+          <label>Nama</label>
+          <input type="text" placeholder="Masukkan nama..." required>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" placeholder="nama@email.com" required>
+        </div>
+        <div class="form-group">
+          <label>Pesan</label>
+          <textarea rows="3" placeholder="Tuliskan pesanmu di sini..." required></textarea>
+        </div>
+        <button type="submit" class="btn-send">Kirim Pesan</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- TASKBAR / NAVBAR BAWAH -->
+  <footer class="taskbar">
+    <button class="start-btn">
+      <i class="fa-solid fa-heart"></i> Start
+    </button>
+    <div class="taskbar-apps" id="taskbar-apps">
+      <!-- Active App Tabs akan tergenerate via JS di sini -->
+    </div>
+    <div class="taskbar-time" id="clock">00:00 PM</div>
+  </footer>
+
+  <!-- ==========================================================================
+     7. JAVASCRIPT LOGIC (INTERACTION & DRAGGABLE)
+     ========================================================================== -->
+  <script>
+    let highestZIndex = 100;
+
+    // 1. Fungsi Buka Window
+    function openWindow(id) {
+      const win = document.getElementById(id);
+      if (!win) return;
+      
+      win.classList.add('active');
+      bringToFront(win);
+
+      // Jalankan animasi progress bar jika window skills dibuka
+      if (id === 'win-skills') {
+        setTimeout(() => {
+          const progressBars = win.querySelectorAll('.skill-progress');
+          progressBars.forEach(bar => {
+            bar.style.width = bar.getAttribute('data-width');
+          });
+        }, 100);
+      }
+
+      updateTaskbar();
+    }
+
+    // 2. Fungsi Tutup Window
+    function closeWindow(id) {
+      const win = document.getElementById(id);
+      if (!win) return;
+      
+      win.classList.remove('active');
+
+      // Reset progress bar jika skills ditutup
+      if (id === 'win-skills') {
+        const progressBars = win.querySelectorAll('.skill-progress');
+        progressBars.forEach(bar => bar.style.width = '0');
+      }
+
+      updateTaskbar();
+    }
+
+    // 3. Menjadikan Window Paling Depan saat Diklik
+    function bringToFront(win) {
+      highestZIndex++;
+      win.style.zIndex = highestZIndex;
+    }
+
+    // 4. Fitur Drag & Drop Window
+    document.querySelectorAll('.window').forEach(win => {
+      const header = win.querySelector('.window-header');
+
+      win.addEventListener('mousedown', () => bringToFront(win));
+
+      header.addEventListener('mousedown', (e) => {
+        let shiftX = e.clientX - win.getBoundingClientRect().left;
+        let shiftY = e.clientY - win.getBoundingClientRect().top;
+
+        function moveAt(pageX, pageY) {
+          win.style.left = pageX - shiftX + 'px';
+          win.style.top = pageY - shiftY + 'px';
+        }
+
+        function onMouseMove(e) {
+          moveAt(e.pageX, e.pageY);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+
+        document.addEventListener('mouseup', () => {
+          document.removeEventListener('mousemove', onMouseMove);
+        }, { once: true });
+      });
+    });
+
+    // 5. Update Taskbar App Tabs Secara Dinamis
+    function updateTaskbar() {
+      const taskbarContainer = document.getElementById('taskbar-apps');
+      taskbarContainer.innerHTML = '';
+
+      document.querySelectorAll('.window.active').forEach(win => {
+        const id = win.id;
+        const title = win.querySelector('.window-title').textContent.trim();
+        
+        const tab = document.createElement('div');
+        tab.className = 'app-tab active-tab';
+        tab.innerHTML = title;
+        tab.onclick = () => bringToFront(win);
+        
+        taskbarContainer.appendChild(tab);
+      });
+    }
+
+    // 6. Jam Real-Time
+    function updateClock() {
+      const now = new Date();
+      let hours = now.getHours();
+      let minutes = now.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      
+      hours = hours % 12 || 12;
+      minutes = minutes < 10 ? '0' + minutes : minutes;
+      
+      document.getElementById('clock').textContent = `${hours}:${minutes} ${ampm}`;
+    }
+    
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Buka Window 'About_Me' Secara Otomatis saat Pertama Kali Dimuat
+    window.addEventListener('DOMContentLoaded', () => {
+      openWindow('win-about');
+    });
+  </script>
+</body>
+</html>
